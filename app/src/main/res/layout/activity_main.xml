@@ -20,6 +20,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/chaplist"
+        android:layout_margin="0pt"
         android:id="@+id/scrollView">
         <LinearLayout
             android:orientation="vertical"

@@ -12,10 +12,13 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.Chronometer;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.MediaController;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 
 import java.io.BufferedReader;
@@ -29,7 +32,6 @@ import java.util.regex.Pattern;
 public class MainActivity extends AppCompatActivity {
     private AssetManager mAssetManager;
     private Chronometer et_time;
-    private MediaPlayer mediaPlayer = new MediaPlayer();
 
     private SeekBar sb;
     private static final String TAG = "output";
@@ -53,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
                     chap_btn.setOnClickListener(new OnClickListener() {
                         public void onClick(View v) {
                             Log.e(TAG, cur_chap);
-                            handle_text(chap_title, cur_chap, "pic", "sound");
+                            handle_text(chap_title, cur_chap, "pic", "sound", "video");
                         }
                     });
                     ((LinearLayout) this.findViewById(R.id.chaplist)).addView(chap_btn);
@@ -64,7 +66,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     //按章读取，分段插入TextView
-    public void handle_text(TextView chap_title,String filename, String img_keyword, String sound_keyword){
+    public void handle_text(TextView chap_title, String filename,
+                            String img_keyword, String sound_keyword,
+                            String video_keyword){
         ((LinearLayout) this.findViewById(R.id.textbox)).removeAllViews();
         try{
             InputStream chapInp = mAssetManager.open(filename);
@@ -87,14 +91,14 @@ public class MainActivity extends AppCompatActivity {
             //设置正则匹配符
             Pattern img_pat = Pattern.compile("\\((\\S+?)\\)\\[" + img_keyword + "(\\S+?)\\]");
             Pattern sound_pat = Pattern.compile("\\((\\S+?)\\)\\[" + sound_keyword + "(\\S+?)\\]");
-//            Pattern video_pat = Pattern.compile("\\((\\S+?)\\)\\[" + video_keyword + "(\\S+?)\\]");
+            Pattern video_pat = Pattern.compile("\\((\\S+?)\\)\\[" + video_keyword + "(\\S+?)\\]");
             Log.e(TAG, img_pat.toString());
             //遍历段落转换资源
 
             for(String line: lines){
                 Matcher img_mat = img_pat.matcher(line);
                 Matcher sound_mat = sound_pat.matcher(line);
-
+                Matcher video_mat = video_pat.matcher(line);
 
                 //匹配图片
                 if(img_mat.find()){
@@ -118,32 +122,21 @@ public class MainActivity extends AppCompatActivity {
                     String sound_filename = sound_keyword + sound_id;
                     Log.e(TAG, sound_filename);
                     final Uri soundfile_uri = Uri.parse("android.resource://" + getPackageName() + "/raw/" + sound_filename);
+                    final MediaPlayer mp = new MediaPlayer();
+                    mp.setDataSource(this, soundfile_uri);
                     bt_play = new Button(this);
                     bt_play.setText("播放");
                     bt_play.setOnClickListener(new OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            try {
-//                                if (mediaPlayer.isPlaying()) {
-//                                    mediaPlayer.reset();
-//                                }
-                                mediaPlayer.setDataSource(MainActivity.this, soundfile_uri);
                                 // 采用异步的方式
-                                mediaPlayer.prepareAsync();
-//                                mediaPlayer.prepare();
-                                mediaPlayer.start();
-                                Log.e(TAG, String.valueOf(mediaPlayer.isPlaying()));
-                            } catch (IllegalArgumentException e) {
-                                e.printStackTrace();
-                            } catch (IllegalStateException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                                mp.prepareAsync();
+                                mp.start();
+                                Log.e(TAG, String.valueOf(mp.isPlaying()));
+                                mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                                 @Override
                                 public void onCompletion(MediaPlayer mp) {
-                                    mediaPlayer.release();
+                                    mp.release();
                                 }
                             });
                         }
@@ -153,12 +146,12 @@ public class MainActivity extends AppCompatActivity {
                     bt_pause.setOnClickListener(new OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            if (mediaPlayer.isPlaying()) {
-                                mediaPlayer.pause();
+                            if (mp.isPlaying()) {
+                                mp.pause();
                                 bt_pause.setText("继续");
-                                Log.e(TAG, String.valueOf(mediaPlayer.getCurrentPosition()));
+                                Log.e(TAG, String.valueOf(mp.getCurrentPosition()));
                             } else {
-                                mediaPlayer.start();
+                                mp.start();
                                 bt_pause.setText("暂停");
                             }
                         }
@@ -169,8 +162,9 @@ public class MainActivity extends AppCompatActivity {
                     bt_stop.setOnClickListener(new OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            if (mediaPlayer.isPlaying()) {
-                                mediaPlayer.stop();
+                            if (mp.isPlaying()) {
+                                mp.stop();
+                                mp.release();
                             }
                         }
                     });
@@ -178,6 +172,25 @@ public class MainActivity extends AppCompatActivity {
                     ((LinearLayout) this.findViewById(R.id.textbox)).addView(bt_pause);
                     ((LinearLayout) this.findViewById(R.id.textbox)).addView(bt_stop);
                     // 为播放器注册
+
+                }
+                if(video_mat.find()){
+                    String video_id = video_mat.group(2);
+                    String video_filename = video_keyword + video_id;
+                    line = line.replace(video_mat.group(0), video_mat.group(1));
+                    Log.e(TAG, video_mat.group(0) + " " + video_mat.group(1));
+                    Uri videofile_uri = Uri.parse("android.resource://" + getPackageName() + "/raw/" + video_filename);
+                    VideoView video = new VideoView(this);
+                    MediaController mediaco=new MediaController(this);
+                    video.setVideoURI(videofile_uri);
+                    video.setMediaController(mediaco);
+                    mediaco.setMediaPlayer(video);
+                    video.requestFocus();
+                    Log.e(TAG, videofile_uri.toString());
+                    Log.e(TAG, String.valueOf(video.isPlaying()));
+                    video.setLayoutParams(new FrameLayout.LayoutParams(1000, 600));
+                    ((LinearLayout) this.findViewById(R.id.textbox)).addView(video);
+                    Log.e(TAG, "here");
 
                 }
                 TextView para = new TextView(this);
@@ -188,12 +201,5 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-    @Override
-
-    protected void onDestroy() {
-        if(mediaPlayer != null)
-            mediaPlayer.release();
-        super.onDestroy();
     }
 }
