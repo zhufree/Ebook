@@ -4,17 +4,20 @@ import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import java.io.BufferedReader;
@@ -28,15 +31,13 @@ public class ChapterActivity extends AppCompatActivity {
     private AssetManager mAssetManager;
     private TextView titleView;
     private String TAG = "ouput";
-//    private int width, height;
+    LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chapter);
-//        DisplayMetrics dm = getResources().getDisplayMetrics();
-//        width = dm.widthPixels;
-//        Log.i(TAG, String.valueOf(width));
         mAssetManager = getAssets();
         titleView = new TextView(this);
         String chapTitle = getIntent().getStringExtra("title");
@@ -47,13 +48,13 @@ public class ChapterActivity extends AppCompatActivity {
     public void handle_text(TextView chap_title, String filename,
                             String img_keyword, String sound_keyword,
                             String video_keyword){
-//        ((LinearLayout) this.findViewById(R.id.text_box)).removeAllViews();
         try{
             InputStream chapInp = mAssetManager.open(filename);
             BufferedReader chapInpBufReader = new BufferedReader(new InputStreamReader(chapInp));
             String eachline = chapInpBufReader.readLine();
             chap_title.setTextSize(40);
             chap_title.setText(eachline);
+            chap_title.setLineSpacing(8, (float)1.5);
             chap_title.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             ((LinearLayout) this.findViewById(R.id.text_box)).addView(chap_title);
 
@@ -95,64 +96,40 @@ public class ChapterActivity extends AppCompatActivity {
                     line = line.replace(img_mat.group(0), img_mat.group(1));
                 }
                 if(sound_mat.find()){
-                    final Button bt_play, bt_pause, bt_stop;
                     String sound_id = sound_mat.group(2);
                     String sound_filename = sound_keyword + sound_id;
                     Log.e(TAG, sound_filename);
                     final Uri soundfile_uri = Uri.parse("android.resource://" + getPackageName() + "/raw/" + sound_filename);
                     final MediaPlayer mp = new MediaPlayer();
                     mp.setDataSource(this, soundfile_uri);
-                    bt_play = new Button(this);
-//                    bt_play.setWidth(width/3);
-                    bt_play.setText("播放");
-                    bt_play.setOnClickListener(new View.OnClickListener() {
+                    boolean isPause = false;
+
+                    mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override
-                        public void onClick(View v) {
-                                // 采用异步的方式
-                                mp.prepareAsync();
-                                mp.start();
-                                Log.e(TAG, String.valueOf(mp.isPlaying()));
-                                mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                                @Override
-                                public void onCompletion(MediaPlayer mp) {
-                                    mp.release();
-                                }
-                            });
+                        public void onCompletion(MediaPlayer mp) {
+                            mp.release();
                         }
                     });
-                    bt_pause = new Button(this);
-//                    bt_pause.setWidth(width/3);
-                    bt_pause.setText("暂停");
-                    bt_pause.setOnClickListener(new View.OnClickListener() {
+                    BtnGroup btnGroup = new BtnGroup(this, soundfile_uri);
+                    btnGroup.setOnBtnGroupClickListener(new BtnGroup.BtnGroupClickListener() {
                         @Override
-                        public void onClick(View v) {
-                            if (mp.isPlaying()) {
-                                mp.pause();
-                                bt_pause.setText("继续");
-                                Log.e(TAG, String.valueOf(mp.getCurrentPosition()));
-                            } else {
-                                mp.start();
-                                bt_pause.setText("暂停");
-                            }
+                        public void playClick() {
+                            Toast.makeText(getBaseContext(), "开始播放", Toast.LENGTH_SHORT).show();
                         }
 
-                    });
-                    bt_stop = new Button(this);
-                    bt_stop.setText("停止");
-//                    bt_stop.setWidth(width/3);
-                    bt_stop.setOnClickListener(new View.OnClickListener() {
                         @Override
-                        public void onClick(View v) {
-                            if (mp.isPlaying()) {
-                                mp.stop();
-                                mp.release();
-                            }
+                        public void pauseClick() {
+                            Toast.makeText(getBaseContext(), "暂停/继续", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void stopClick() {
+                            Toast.makeText(getBaseContext(), "停止播放", Toast.LENGTH_SHORT).show();
                         }
                     });
-                    ((LinearLayout) this.findViewById(R.id.text_box)).addView(bt_play);
-                    ((LinearLayout) this.findViewById(R.id.text_box)).addView(bt_pause);
-                    ((LinearLayout) this.findViewById(R.id.text_box)).addView(bt_stop);
+                    ((LinearLayout) this.findViewById(R.id.text_box)).addView(btnGroup);
                     // 为播放器注册
+                    line = line.replace(sound_mat.group(0), sound_mat.group(1));
 
                 }
                 if(video_mat.find()){
@@ -167,16 +144,15 @@ public class ChapterActivity extends AppCompatActivity {
                     video.setMediaController(mediaco);
                     mediaco.setMediaPlayer(video);
                     video.requestFocus();
-                    Log.e(TAG, videofile_uri.toString());
-                    Log.e(TAG, String.valueOf(video.isPlaying()));
                     video.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 800));
                     ((LinearLayout) this.findViewById(R.id.text_box)).addView(video);
-                    Log.e(TAG, "here");
 
                 }
                 TextView para = new TextView(this);
                 para.setText(line);
-                para.setTextSize(25);
+                para.setTextSize(20);
+                para.setLineSpacing(8, (float)1.2);
+                para.setLayoutParams(textParams);
                 ((LinearLayout) this.findViewById(R.id.text_box)).addView(para);
             }
             chapInp.close();
@@ -184,4 +160,5 @@ public class ChapterActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
 }
