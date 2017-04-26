@@ -29,7 +29,6 @@ public class BtnGroup extends RelativeLayout{
 
     private BtnGroupClickListener listener;
     private MediaPlayer mp = new MediaPlayer();
-//    mp.setDataSource(this, soundfile_uri);
     boolean isPause = false;
 
     // 给按钮添加点击事件
@@ -117,14 +116,6 @@ public class BtnGroup extends RelativeLayout{
             @Override
             public void onClick(View view) {
                 listener.pauseClick();
-//                if (mp.isPlaying()) {
-//                    mp.pause();
-////                                bt_pause.setText("继续");
-////                    Log.e(TAG, String.valueOf(mp.getCurrentPosition()));
-//                } else {
-//                    mp.start();
-////                                bt_pause.setText("暂停");
-//                }
                 if(mp.isPlaying()&&!isPause){
                     mp.pause();//暂停播放
                     isPause = true;

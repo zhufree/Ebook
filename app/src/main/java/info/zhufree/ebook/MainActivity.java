@@ -40,9 +40,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "output";
 
-    private View viewContent;
-    private String name;
-    private String title;
 
     private List<String> data = new ArrayList<String>();
 
@@ -66,8 +63,7 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, String.valueOf(chaps.length));
             for(String c:chaps) {
                 if (c.endsWith(".txt")) {
-                    Log.i(TAG, c);
-                    data.add(c);
+                    data.add(c.split("\\.")[0]);
                 }
             }
         } catch (IOException e) {

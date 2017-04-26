@@ -4,18 +4,15 @@ import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -100,16 +97,16 @@ public class ChapterActivity extends AppCompatActivity {
                     String sound_filename = sound_keyword + sound_id;
                     Log.e(TAG, sound_filename);
                     final Uri soundfile_uri = Uri.parse("android.resource://" + getPackageName() + "/raw/" + sound_filename);
-                    final MediaPlayer mp = new MediaPlayer();
-                    mp.setDataSource(this, soundfile_uri);
-                    boolean isPause = false;
-
-                    mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {
-                            mp.release();
-                        }
-                    });
+//                    final MediaPlayer mp = new MediaPlayer();
+//                    mp.setDataSource(this, soundfile_uri);
+//                    boolean isPause = false;
+//
+//                    mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//                        @Override
+//                        public void onCompletion(MediaPlayer mp) {
+//                            mp.release();
+//                        }
+//                    });
                     BtnGroup btnGroup = new BtnGroup(this, soundfile_uri);
                     btnGroup.setOnBtnGroupClickListener(new BtnGroup.BtnGroupClickListener() {
                         @Override
@@ -159,6 +156,7 @@ public class ChapterActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        ((ScrollView) this.findViewById(R.id.chap_content)).smoothScrollTo(0,20);
     }
 
 }

@@ -83,7 +83,7 @@ public class ChapTitleAdapter  extends BaseAdapter {
             @Override
             public void onClick(View v) {
                 Intent redirectIntent = new Intent(mContext, ChapterActivity.class);
-                redirectIntent.putExtra("title", item);
+                redirectIntent.putExtra("title", item + ".txt");
                 mContext.startActivity(redirectIntent);
             }
         });
